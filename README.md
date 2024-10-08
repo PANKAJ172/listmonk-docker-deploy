@@ -2,5 +2,5 @@
 
 ```
 docker-compose up -d db
-docker-compose run --rm app ./listmonk --install
+docker-compose run --rm app4 ./listmonk --install
 ```
