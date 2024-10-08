@@ -1,0 +1,66 @@
+version: "3.7"
+
+x-app-defaults: &app-defaults
+  restart: unless-stopped
+  image: listmonk/listmonk:v4.0.0-rc-3
+  ports:
+    - "9000:9000"
+  networks:
+    - listmonk4
+  environment:
+    - TZ=Etc/UTC
+
+x-db-defaults: &db-defaults
+  image: postgres:13-alpine
+  ports:
+    - "9433:5432"
+  networks:
+    - listmonk4
+  environment:
+    - POSTGRES_PASSWORD=listmonk4
+    - POSTGRES_USER=listmonk4
+    - POSTGRES_DB=listmonk4
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U listmonk4"]
+    interval: 10s
+    timeout: 5s
+    retries: 6
+
+services:
+  db4:
+    <<: *db-defaults
+    container_name: listmonk_db4
+    volumes:
+      - type: volume
+        source: listmonk-data4
+        target: /var/lib/postgresql/data
+
+  app4:
+    <<: *app-defaults
+    container_name: listmonk_app4
+    # hostname: listmonk.example.com # Recommend using FQDN for hostname
+    # command: [sh, -c, "yes | ./listmonk --install --config config.toml && ./listmonk --config config-demo.toml"]
+    depends_on:
+      - db4
+    volumes:
+      - ./config.toml:/listmonk/config.toml
+
+  # demo-db:
+  #   container_name: listmonk_demo_db
+  #   <<: *db-defaults
+
+  # demo-app:
+  #   <<: *app-defaults
+  #   container_name: listmonk_demo_app
+  #   command: [sh, -c, "yes | ./listmonk --install --config config-demo.toml && ./listmonk --config config-demo.toml"]
+  #   depends_on:
+  #     - demo-db
+
+networks:
+  listmonk4:
+    driver: bridge
+
+volumes:
+  listmonk-data4:
+    
